@@ -54,6 +54,7 @@ protected:
 private:
   QByteArray svgXmlOrig = "";
   QByteArray svgXml = "";
+  QByteArray svgXmlLoaded = "";
   QString scaling = "width";
   QList<QString> layers;
   int svgIdx = 0;

@@ -46,6 +46,7 @@ SvgChart::~SvgChart()
 void SvgChart::init()
 {
   svgItem = new QGraphicsSvgItem();
+  svgItem->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
   addItem(svgItem);
 
   titleItem->setText(objectName());
@@ -110,7 +111,10 @@ void SvgChart::updateAll()
 {
   setRedGreen(mainSettings.hexRed, mainSettings.hexGreen);
 
-  svgItem->renderer()->load(svgXml);
+  if(svgXml != svgXmlLoaded) {
+    svgItem->renderer()->load(svgXml);
+    svgXmlLoaded = svgXml;
+  }
 
   if(!layers.isEmpty() && svgIdx <= layers.size())
     svgItem->setElementId(layers.at(svgIdx));
