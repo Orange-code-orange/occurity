@@ -1,0 +1,20 @@
+<!DOCTYPE RCC>
+  <RCC version="1.0">
+  <qresource prefix="/">
+    <file alias="LICENSE">LICENSE</file>
+    <file alias="icon.png">icons/icon.png</file>
+    <file alias="splash.svg">icons/splash.svg</file>
+    <file alias="ruler.png">icons/ruler.png</file>
+    <file alias="pinblank.png">icons/pinblank.png</file>
+    <file alias="pinfilled.png">icons/pinfilled.png</file>
+    <file alias="pincorrect.png">icons/pincorrect.png</file>
+    <file alias="pinincorrect.png">icons/pinincorrect.png</file>
+    <file alias="touch-up.png">icons/touch-up.png</file>
+    <file alias="touch-down.png">icons/touch-down.png</file>
+    <file alias="touch-left.png">icons/touch-left.png</file>
+    <file alias="touch-right.png">icons/touch-right.png</file>
+    <file alias="touch-crowding.png">icons/touch-crowding.png</file>
+    <file alias="touch-single.png">icons/touch-single.png</file>
+    <file alias="touch-preferences.png">icons/touch-preferences.png</file>
+  </qresource>
+</RCC>

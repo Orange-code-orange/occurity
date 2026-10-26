@@ -1,0 +1,15 @@
+title:Apply kids charts from '%USBPATH%/occurity/kids_files' to existing release found at '%HOME%/occurity'
+category:Update jobs
+
+message:Setting source and destination folders
+srcpath:%USBPATH%/occurity/kids_files
+dstpath:%HOME%/occurity
+
+message:Copying kids optotype and charts to '%DSTPATH%'
+cpfile:charts.xml
+cppath:optotypes
+
+message:Succesfully added kids optotype and charts to '%DSTPATH'
+
+# Ask for system reboot
+reboot:ask

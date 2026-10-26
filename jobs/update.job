@@ -1,0 +1,44 @@
+title:Apply update from '%USBPATH%/occurity/releases/%HOSTNAME%/occurity' to '%HOME%/occurity'
+category:Update jobs
+
+message:Setting source and destination paths.
+srcpath:%USBPATH%/occurity/releases/%HOSTNAME%/occurity
+dstpath:%HOME%/occurity
+
+# Set %VERSION% variable to the new version
+loadvars:VERSION
+
+message:Adding global file and path excludes
+addexclude:optotypes/copyrights.txt
+addexclude:optotypes/kids
+
+message:Copying required files from source to destination
+cpfile:AUTHORS
+rmfile:%DSTPATH%/charts.xml
+cpfile:charts.xml.example
+cpfile:LICENSE
+cpfile:README.md
+cpfile:VERSION
+cpfile:Occurity
+setexec:%DSTPATH%/Occurity
+cpfile:occurity_da_DK.qm
+
+message:Copying required paths, including subfolders, from source to destination
+rmpath:%DSTPATH%/icons
+cppath:icons
+rmpath:%DSTPATH%/optotypes
+cppath:optotypes
+rmpath:%DSTPATH%/scripts
+cppath:scripts
+setexec:%DSTPATH%/scripts/*.sh
+rmpath:%DSTPATH%/svg
+cppath:svg
+rmpath:%DSTPATH%/jobs
+cppath:jobs
+rmpath:%DSTPATH%/videos
+cppath:videos
+
+message:Succesfully updated to Occurity v%VERSION%!
+
+# Ask for system reboot
+reboot:ask

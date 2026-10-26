@@ -1,0 +1,11 @@
+title:Instalar pruebas Ishihara
+category:Update jobs
+
+message:Copiando SVGs de Ishihara...
+cpfile:%USBPATH%/occurity/svg/ishihara_shapes.svg;%WORKDIR%/svg/ishihara_shapes.svg
+cpfile:%USBPATH%/occurity/svg/ishihara_numbers.svg;%WORKDIR%/svg/ishihara_numbers.svg
+
+message:Actualizando charts.xml.example...
+cpfile:%USBPATH%/occurity/charts.xml.example;%WORKDIR%/charts.xml.example
+
+message:Ishihara instalado correctamente!
