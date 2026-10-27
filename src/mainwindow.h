@@ -36,6 +36,7 @@
 #include <QGraphicsView>
 #include <QSettings>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QTimer>
 
 class MainWindow : public QGraphicsView
@@ -56,6 +57,7 @@ private slots:
   void init();
   void monitorSleep();
   void monitorOn();
+  void hideCursor();
 
 private:
   QSettings &config;
@@ -83,5 +85,8 @@ private:
 
   // Opposite of the above. If 'q' is pressed while monitor is off the monitorIsOn bool must be set to 'true' after a delay to avoid a double-press to keep turning it off while it already is off.
   QTimer delayedMonitorOnTimer;
+
+  // Timer to hide the mouse cursor after a period of inactivity when showMouse is false
+  QTimer mouseHideTimer;
 };
 #endif/*__OCCURITY_MAINWINDOW_H__*/

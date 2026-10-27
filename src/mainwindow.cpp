@@ -119,6 +119,10 @@ MainWindow::MainWindow(QSettings &config) : config(config)
   resetTimer.setSingleShot(true);
   resetTimer.start();
 
+  mouseHideTimer.setInterval(3000);
+  mouseHideTimer.setSingleShot(true);
+  connect(&mouseHideTimer, &QTimer::timeout, this, &MainWindow::hideCursor);
+
   QTimer::singleShot(100, this, &MainWindow::init);
 }
 
@@ -282,6 +286,27 @@ bool MainWindow::loadCharts(QString chartsXml)
 
 bool MainWindow::eventFilter(QObject *, QEvent *event)
 {
+  if(event->type() == QEvent::MouseMove) {
+    sleepTimer.start();
+    resetTimer.start();
+    setCursor(Qt::ArrowCursor);
+    if(!config.value("touch/showMouse", false).toBool()) {
+      mouseHideTimer.start();
+    }
+    monitorIsOn = true;
+    return false;
+  }
+  if(event->type() == QEvent::MouseButtonPress) {
+    sleepTimer.start();
+    resetTimer.start();
+    QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+    if(mouseEvent->button() == Qt::RightButton) {
+      spawnPreferences();
+      return true;
+    }
+    monitorIsOn = true;
+    return false;
+  }
   if(event->type() == QEvent::KeyPress) {
     // Reset sleep timer
     sleepTimer.start();
@@ -487,4 +512,11 @@ void MainWindow::monitorSleep()
 void MainWindow::monitorOn()
 {
   monitorIsOn = true;
+}
+
+void MainWindow::hideCursor()
+{
+  if(!config.value("touch/showMouse", false).toBool()) {
+    setCursor(Qt::BlankCursor);
+  }
 }
