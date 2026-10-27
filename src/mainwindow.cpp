@@ -95,6 +95,9 @@ MainWindow::MainWindow(QSettings &config) : config(config)
   }
 
   installEventFilter(this);
+  viewport()->installEventFilter(this);
+  setMouseTracking(true);
+  viewport()->setMouseTracking(true);
 
   if(mainSettings.enableVideoPlayer && videoPlaybackSupported()) {
     videoPlayer = new VideoPlayer(mainSettings.videosFolder,
@@ -289,7 +292,7 @@ bool MainWindow::eventFilter(QObject *, QEvent *event)
   if(event->type() == QEvent::MouseMove) {
     sleepTimer.start();
     resetTimer.start();
-    setCursor(Qt::ArrowCursor);
+    viewport()->setCursor(Qt::ArrowCursor);
     if(!config.value("touch/showMouse", false).toBool()) {
       mouseHideTimer.start();
     }
@@ -447,9 +450,9 @@ void MainWindow::updateFromConfig()
   mainSettings.touchControls = config.value("touch/touchControls").toBool();
   mainSettings.leftHandedOperator = config.value("touch/leftHandedOperator").toBool();
   if(config.value("touch/showMouse", false).toBool()) {
-    setCursor(Qt::ArrowCursor);
+    viewport()->setCursor(Qt::ArrowCursor);
   } else {
-    setCursor(Qt::BlankCursor);
+    viewport()->setCursor(Qt::BlankCursor);
   }
 
   mainSettings.pinCode = config.value("main/pinCode").toString();
@@ -517,6 +520,6 @@ void MainWindow::monitorOn()
 void MainWindow::hideCursor()
 {
   if(!config.value("touch/showMouse", false).toBool()) {
-    setCursor(Qt::BlankCursor);
+    viewport()->setCursor(Qt::BlankCursor);
   }
 }
