@@ -38,6 +38,7 @@
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QMovie>
+#include <QPainterPath>
 
 OptotypeChart::OptotypeChart(MainSettings &mainSettings, QObject *parent) :
   AbstractChart(mainSettings, parent)
@@ -70,6 +71,12 @@ void OptotypeChart::init()
 
   crowdRect = addRect(0, 0, 10, 10);
 
+  highlightRect = addPath(QPainterPath(), QPen(Qt::NoPen), QBrush());
+  highlightRect->hide();
+  highlightLine = addLine(0, 0, 1, 0);
+  highlightLine->setZValue(2);
+  highlightLine->hide();
+
   sizeItem = new QGraphicsSimpleTextItem("0.0");
   copyrightItem = new QGraphicsSimpleTextItem("");
   QFont font;
@@ -94,9 +101,14 @@ void OptotypeChart::init()
   titleItem->setText(objectName());
 
   addItem(sizeItem);
+  sizeItem->hide();
   addItem(titleItem);
   addItem(copyrightItem);
   copyrightItem->setPos((mainSettings.width / 2.0) - (copyrightItem->boundingRect().width() / 2.0), mainSettings.height - 35);
+
+  animTimer = new QTimer(this);
+  animTimer->setInterval(16);
+  connect(animTimer, &QTimer::timeout, this, &OptotypeChart::animStep);
 
   setSize(startSize);
 }
@@ -110,10 +122,16 @@ void OptotypeChart::makeIdle()
 
 void OptotypeChart::keyPressEvent(QKeyEvent *event)
 {
+  bool navigationChanged = false;
+
   if(event->key() == Qt::Key_Up ||
      event->key() == Qt::Key_Down ||
      event->key() == Qt::Key_PageUp ||
      event->key() == Qt::Key_PageDown) {
+    animStartY.resize(rows.length());
+    for(int a = 0; a < rows.length(); ++a) {
+      animStartY[a] = rows.at(a)->getLetters()->y();
+    }
     if(event->key() == Qt::Key_Up) {
       currentRowIdx--;
       if(currentRowIdx < 0) {
@@ -136,16 +154,13 @@ void OptotypeChart::keyPressEvent(QKeyEvent *event)
       }
     }
     positionReset();
-  } else if(event->key() == Qt::Key_Left) {
-    if(skew > - (rows.at(currentRowIdx)->getLetters()->childItems().length() / 2)) {
-      skew--;
-    }
-  } else if(event->key() == Qt::Key_Right) {
-    if(skew < rows.at(currentRowIdx)->getLetters()->childItems().length() / 2) {
-      skew++;
-    }
+    animTargetY = computeTargetY();
+    animating = true;
+    animElapsed.start();
+    if(!animTimer->isActive()) animTimer->start(16);
+    navigationChanged = true;
   } else if(event->key() == Qt::Key_C) {
-    mainSettings.crowding = !mainSettings.crowding;
+    highlightVisible = !highlightVisible;
   } else if(event->key() == Qt::Key_M) {
     mainSettings.single = !mainSettings.single;
   } else if(event->key() == Qt::Key_R) {
@@ -166,7 +181,9 @@ void OptotypeChart::keyPressEvent(QKeyEvent *event)
     }
   }
 
-  updateAll();
+  if(!navigationChanged) {
+    updateAll();
+  }
 }
 
 void OptotypeChart::setOptotype(const QString &optotype)
@@ -233,61 +250,97 @@ void OptotypeChart::addRow(const QString &size, const QString &caption, const QS
   OptotypeRow *optotypeRow = new OptotypeRow(size, caption, layer);
 
   rows.append(optotypeRow);
+
+  QGraphicsSimpleTextItem *leftLabel = new QGraphicsSimpleTextItem();
+  QGraphicsSimpleTextItem *rightLabel = new QGraphicsSimpleTextItem();
+  leftLabel->setZValue(1);
+  rightLabel->setZValue(1);
+  addItem(leftLabel);
+  addItem(rightLabel);
+  leftLabel->hide();
+  rightLabel->hide();
+  rowLeftLabels.append(leftLabel);
+  rowRightLabels.append(rightLabel);
+}
+
+QString OptotypeChart::snellenFraction(double decimal)
+{
+  if(decimal <= 0) return "";
+  static const QMap<int, QString> snellenMap = {
+    {50,   "20/400"},  {63,   "20/320"},  {67,   "20/320"},
+    {80,   "20/250"},  {100,  "20/200"},  {125,  "20/160"},
+    {160,  "20/125"},  {200,  "20/100"},  {250,  "20/80"},
+    {320,  "20/63"},   {400,  "20/50"},   {500,  "20/40"},
+    {630,  "20/32"},   {800,  "20/25"},   {1000, "20/20"},
+    {1250, "20/16"},   {1600, "20/12.5"}, {2000, "20/10"},
+  };
+  int key = qRound(decimal * 1000);
+  if(snellenMap.contains(key)) {
+    return snellenMap[key];
+  }
+  double denom = 20.0 / decimal;
+  double denomHalf = qRound(denom * 2) / 2.0;
+  return "20/" + (denomHalf == qFloor(denomHalf)
+                  ? QString::number((int)denomHalf)
+                  : QString::number(denomHalf, 'f', 1));
 }
 
 void OptotypeChart::updateAll()
 {
-  QString rowCaption = "";
+  const double labelMargin = 130.0;
+  const int labelFontSize = 30;
+  const double rowGap = mainSettings.height * 0.13;
+
+  // Step A: Apply correct scale to each row and center horizontally
+  for(int a = 0; a < rows.length(); ++a) {
+    double decimal = rows.at(a)->getSize().toDouble();
+    if(decimal <= 0) continue;
+    double scale = (mainSettings.pxPerArcMin / ((10.0 * decimal) * 100.0)) * mainSettings.distanceFactor;
+    rows.at(a)->getLetters()->setScale(scale);
+    double rowWidth = rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->boundingRect()).width();
+    rows.at(a)->getLetters()->setX((mainSettings.width / 2.0) - (rowWidth / 2.0));
+  }
+
+  // Step B: Vertical positioning — current row centered, previous above, next below
+  if(!animating) {
+    double currentRowHeight = rows.at(currentRowIdx)->getLetters()->mapRectToScene(
+      rows.at(currentRowIdx)->getLetters()->boundingRect()).height();
+    double currentY = (mainSettings.height / 2.0) - (currentRowHeight / 2.0);
+    rows.at(currentRowIdx)->getLetters()->setY(currentY);
+
+    double topY = currentY;
+    for(int a = currentRowIdx - 1; a >= 0; --a) {
+      double decimal = rows.at(a)->getSize().toDouble();
+      if(decimal <= 0) continue;
+      double rowHeight = rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->boundingRect()).height();
+      topY -= rowHeight + rowGap;
+      rows.at(a)->getLetters()->setY(topY);
+    }
+
+    double bottomY = currentY + currentRowHeight;
+    for(int a = currentRowIdx + 1; a < rows.length(); ++a) {
+      double decimal = rows.at(a)->getSize().toDouble();
+      if(decimal <= 0) continue;
+      double rowHeight = rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->boundingRect()).height();
+      rows.at(a)->getLetters()->setY(bottomY + rowGap);
+      bottomY += rowHeight + rowGap;
+    }
+  }
+
+  // Step C: Show letters; apply single/crowding effects only to the active row
   for(int a = 0; a < rows.length(); ++a) {
     if(a == currentRowIdx) {
-      if(mainSettings.useRowCaptions && !rows.at(a)->getCaption().isEmpty()) {
-        rowCaption = rows.at(a)->getCaption();
-      } else {
-        double decimal = rows.at(a)->getSize().toDouble();
-        if(decimal > 0) {
-          static const QMap<int, QString> snellenMap = {
-            {50,   "20/400"},  {63,   "20/320"},  {67,   "20/320"},
-            {80,   "20/250"},  {100,  "20/200"},  {125,  "20/160"},
-            {160,  "20/125"},  {200,  "20/100"},  {250,  "20/80"},
-            {320,  "20/63"},   {400,  "20/50"},   {500,  "20/40"},
-            {630,  "20/32"},   {800,  "20/25"},   {1000, "20/20"},
-            {1250, "20/16"},   {1600, "20/12.5"}, {2000, "20/10"},
-          };
-          int key = qRound(decimal * 1000);
-          if(snellenMap.contains(key)) {
-            rowCaption = snellenMap[key];
-          } else {
-            double denom = 20.0 / decimal;
-            double denomHalf = qRound(denom * 2) / 2.0;
-            rowCaption = "20/" + (denomHalf == qFloor(denomHalf)
-                                  ? QString::number((int)denomHalf)
-                                  : QString::number(denomHalf, 'f', 1));
-          }
-        } else {
-          rowCaption = rows.at(a)->getSize();
-        }
-      }
       double decimalSize = rows.at(a)->getSize().toDouble();
       double arcMinScaled = ((mainSettings.pxPerArcMin / ((10.0 * decimalSize) * 100.0)) * 100.0) * mainSettings.distanceFactor;
       double spaceWidthScaled = (spaceWidth / 100.0) * arcMinScaled;
 
-      // Scale row to current decimalSize and patient distance
-      rows.at(a)->getLetters()->setScale((mainSettings.pxPerArcMin / ((10.0 * decimalSize) * 100.0)) * mainSettings.distanceFactor);
-
-      // Calculate skew
-      double currentSkew = ((rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->boundingRect()).width() + spaceWidthScaled) / rows.at(a)->getLetters()->childItems().length()) * skew;
-
-      // Always use mapRectToScene to make sure current scaling is taken into account
-      rows.at(a)->getLetters()->setX((mainSettings.width / 2) - (rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->boundingRect()).width() / 2) + currentSkew);
-      rows.at(a)->getLetters()->setY((mainSettings.height / 2) - (rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->boundingRect()).height() / 2));
+      rows.at(a)->getLetters()->setX((mainSettings.width / 2.0) - (rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->boundingRect()).width() / 2.0));
 
       for(QGraphicsItem *graphicsItem: rows.at(a)->getLetters()->childItems()) {
         static_cast<OptoSymbol *>(graphicsItem)->fadeIn();
-        //rows.at(a)->getLetters()->show();
       }
 
-      // Show / hide optotypes depending on whether they are cut off at screen edges
-      // or if single is set
+      // Show / hide optotypes depending on screen edges or single mode
       for(QGraphicsItem *graphicsItem: rows.at(a)->getLetters()->childItems()) {
         OptoSymbol *optoSymbol = static_cast<OptoSymbol *>(graphicsItem);
         if(mainSettings.single) {
@@ -298,8 +351,8 @@ void OptotypeChart::updateAll()
             optoSymbol->fadeInOut();
           }
         } else {
-          if(rows.at(a)->getLetters()->mapToScene(optoSymbol->pos()).x() < 0 ||
-             rows.at(a)->getLetters()->mapToScene(optoSymbol->pos()).x() + rows.at(a)->getLetters()->mapRectToScene(optoSymbol->boundingRect()).width() > mainSettings.width) {
+          if(rows.at(a)->getLetters()->mapToScene(optoSymbol->pos()).x() < labelMargin ||
+             rows.at(a)->getLetters()->mapToScene(optoSymbol->pos()).x() + rows.at(a)->getLetters()->mapRectToScene(optoSymbol->boundingRect()).width() > mainSettings.width - labelMargin) {
             optoSymbol->fadeInOut();
           } else {
             optoSymbol->fadeIn();
@@ -307,63 +360,110 @@ void OptotypeChart::updateAll()
         }
       }
 
-      // Enable / disable crowding
-      if(mainSettings.crowding) {
-        QPen crowdingPen;
-        crowdingPen.setWidth(arcMinScaled);
-        crowdingPen.setColor(QColor(0, 0, 0));
-        crowdingPen.setCapStyle(Qt::FlatCap);
-        crowdingPen.setJoinStyle(Qt::MiterJoin);
-        crowdRect->setPen(crowdingPen);
-
-        int leftMost = 0;
-        double leftX = 100000000;
-        int rightMost = 0;
-        double rightX = 0;
-        for(int b = 0; b < rows.at(a)->getLetters()->childItems().length(); ++b) {
-          if(static_cast<OptoSymbol *>(rows.at(a)->getLetters()->childItems().at(b))->isHidden()) {
-            continue;
-          }
-          if(rows.at(a)->getLetters()->childItems().at(b)->pos().x() <= leftX) {
-            leftMost = b;
-            leftX = rows.at(a)->getLetters()->childItems().at(b)->pos().x();
-          }
-          if(rows.at(a)->getLetters()->childItems().at(b)->pos().x() >= rightX) {
-            rightMost = b;
-            rightX = rows.at(a)->getLetters()->childItems().at(b)->pos().x();
-          }
-        }
-
-        crowdRect->setRect(rows.at(a)->getLetters()->mapToScene(rows.at(a)->getLetters()->childItems().at(leftMost)->pos()).x() - ((crowdingSpan + 0.5) * arcMinScaled),
-                           rows.at(a)->getLetters()->mapToScene(rows.at(a)->getLetters()->childItems().at(leftMost)->pos()).y() - ((crowdingSpan + 0.5) * arcMinScaled),
-                           rows.at(a)->getLetters()->mapToScene(rows.at(a)->getLetters()->childItems().at(rightMost)->pos()).x() - rows.at(a)->getLetters()->mapToScene(rows.at(a)->getLetters()->childItems().at(leftMost)->pos()).x() + rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->childItems().at(rightMost)->boundingRect()).width() + (((crowdingSpan + 0.5) * 2.0) * arcMinScaled),
-                           rows.at(a)->getLetters()->mapRectToScene(rows.at(a)->getLetters()->boundingRect()).height() + (((crowdingSpan + 0.5) * 2.0) * arcMinScaled));
-        crowdRect->show();
-      } else {
-        crowdRect->hide();
-      }
+      crowdRect->hide();
     } else {
       for(QGraphicsItem *graphicsItem: rows.at(a)->getLetters()->childItems()) {
-        static_cast<OptoSymbol *>(graphicsItem)->fadeOut();
-        //rows.at(a)->getLetters()->hide();
+        OptoSymbol *optoSymbol = static_cast<OptoSymbol *>(graphicsItem);
+        double sx = rows.at(a)->getLetters()->mapToScene(optoSymbol->pos()).x();
+        double sw = rows.at(a)->getLetters()->mapRectToScene(optoSymbol->boundingRect()).width();
+        if(sx < labelMargin || sx + sw > mainSettings.width - labelMargin) {
+          optoSymbol->fadeInOut();
+        } else {
+          optoSymbol->fadeIn();
+        }
       }
     }
   }
 
-  QFont font;
-  font.setFamily("Arial");
-  font.setPixelSize(mainSettings.pxPerArcMin * mainSettings.distanceFactor * 1.5);
+  // Step D: Green highlight — fixed width, rounded corners, progressive gradient, bottom line
+  {
+    if(highlightVisible) {
+      QRectF cr = rows.at(currentRowIdx)->getLetters()->mapRectToScene(
+        rows.at(currentRowIdx)->getLetters()->boundingRect());
+      const double vPad = 14.0;
+      const double fixedX = labelMargin;
+      const double fixedW = mainSettings.width - 2.0 * labelMargin;
+      const double rectH = cr.height() + 2.0 * vPad;
+      const double rectY = cr.y() - vPad;
+      const double radius = rectH * 0.35;
 
-  // Add the optoSymbol size visual help
-  sizeItem->setText(rowCaption);
-  sizeItem->setFont(font);
-  sizeItem->setX(10);
-  sizeItem->setY(mainSettings.height - sizeItem->boundingRect().height() - 10);
+      QColor col(mainSettings.hexGreen);
+      QColor light = col.lighter(145);
+      auto a = [&](int alpha) { QColor c = light; c.setAlpha(alpha); return c; };
 
-  // Re-add title
-  titleItem->setFont(font);
-  titleItem->setX(mainSettings.width - titleItem->boundingRect().width() - 10);
-  titleItem->setY(mainSettings.height - titleItem->boundingRect().height() - 10);
+      QLinearGradient gradient(fixedX, 0, fixedX + fixedW, 0);
+      gradient.setColorAt(0.00, a(255));
+      gradient.setColorAt(0.18, a(210));
+      gradient.setColorAt(0.38, a(80));
+      gradient.setColorAt(0.50, a(5));
+      gradient.setColorAt(0.62, a(80));
+      gradient.setColorAt(0.82, a(210));
+      gradient.setColorAt(1.00, a(255));
+
+      QPainterPath path;
+      path.addRoundedRect(fixedX, rectY, fixedW, rectH, radius, radius);
+      highlightRect->setPath(path);
+      highlightRect->setBrush(QBrush(gradient));
+      highlightRect->setPen(QPen(Qt::NoPen));
+      highlightRect->stackBefore(rows.at(currentRowIdx)->getLetters());
+      highlightRect->show();
+
+      const double lineW = 5.0;
+      const double lineY = rectY + rectH - lineW / 2.0 - 1.0;
+      QPen linePen(light, lineW);
+      linePen.setCapStyle(Qt::RoundCap);
+      highlightLine->setPen(linePen);
+      highlightLine->setLine(fixedX + radius, lineY,
+                             fixedX + fixedW - radius, lineY);
+      highlightLine->show();
+    } else {
+      highlightRect->hide();
+      highlightLine->hide();
+    }
+  }
+
+  // Step E: Per-row labels (decimal on left, Snellen fraction on right)
+  {
+    QFont labelFont;
+    labelFont.setFamily("Arial");
+    labelFont.setPixelSize(labelFontSize);
+    for(int a = 0; a < rows.length() && a < rowLeftLabels.length(); ++a) {
+      double decimal = rows.at(a)->getSize().toDouble();
+      if(decimal <= 0) continue;
+      QRectF rowRect = rows.at(a)->getLetters()->mapRectToScene(
+        rows.at(a)->getLetters()->boundingRect());
+
+      // Left label: decimal visual acuity
+      rowLeftLabels.at(a)->setFont(labelFont);
+      rowLeftLabels.at(a)->setText(rows.at(a)->getSize());
+      rowLeftLabels.at(a)->setBrush(QColor(mainSettings.hexRed));
+      rowLeftLabels.at(a)->setX(10);
+      rowLeftLabels.at(a)->setY(rowRect.y() + (rowRect.height() - rowLeftLabels.at(a)->boundingRect().height()) / 2.0);
+      rowLeftLabels.at(a)->show();
+
+      // Right label: Snellen fraction (20/XX)
+      QString fraction = (mainSettings.useRowCaptions && !rows.at(a)->getCaption().isEmpty())
+                          ? rows.at(a)->getCaption()
+                          : snellenFraction(decimal);
+      rowRightLabels.at(a)->setFont(labelFont);
+      rowRightLabels.at(a)->setText(fraction);
+      rowRightLabels.at(a)->setBrush(QColor(mainSettings.hexRed));
+      QRectF rBounds = rowRightLabels.at(a)->boundingRect();
+      rowRightLabels.at(a)->setX(sceneRect().right() - rBounds.width() - 10);
+      rowRightLabels.at(a)->setY(rowRect.y() + (rowRect.height() - rBounds.height()) / 2.0);
+      rowRightLabels.at(a)->show();
+    }
+  }
+
+  // Step F: Update title position
+  {
+    QFont font;
+    font.setFamily("Arial");
+    font.setPixelSize(mainSettings.pxPerArcMin * mainSettings.distanceFactor * 1.5);
+    titleItem->setFont(font);
+    titleItem->setX(mainSettings.width - titleItem->boundingRect().width() - 10);
+    titleItem->setY(mainSettings.height - titleItem->boundingRect().height() - 10);
+  }
 
   // Update entire screen area
   update(0, 0, mainSettings.width, mainSettings.height);
@@ -386,7 +486,6 @@ void OptotypeChart::setFadeLevels(const QString &fadeLevels)
 
 void OptotypeChart::resetAll()
 {
-  skew = 0;
   setSize(startSize);
 }
 
@@ -426,4 +525,51 @@ void OptotypeChart::hideFromList()
     item->hide();
   }
   hideList.clear();
+}
+
+QList<double> OptotypeChart::computeTargetY() const
+{
+  const double rowGap = mainSettings.height * 0.13;
+  QList<double> result(rows.length(), 0.0);
+
+  double currentRowHeight = rows.at(currentRowIdx)->getLetters()->mapRectToScene(
+    rows.at(currentRowIdx)->getLetters()->boundingRect()).height();
+  double currentY = (mainSettings.height / 2.0) - (currentRowHeight / 2.0);
+  result[currentRowIdx] = currentY;
+
+  double topY = currentY;
+  for(int a = currentRowIdx - 1; a >= 0; --a) {
+    double rowHeight = rows.at(a)->getLetters()->mapRectToScene(
+      rows.at(a)->getLetters()->boundingRect()).height();
+    topY -= rowHeight + rowGap;
+    result[a] = topY;
+  }
+
+  double bottomY = currentY + currentRowHeight;
+  for(int a = currentRowIdx + 1; a < rows.length(); ++a) {
+    double rowHeight = rows.at(a)->getLetters()->mapRectToScene(
+      rows.at(a)->getLetters()->boundingRect()).height();
+    result[a] = bottomY + rowGap;
+    bottomY += rowHeight + rowGap;
+  }
+
+  return result;
+}
+
+void OptotypeChart::animStep()
+{
+  double t = qMin(1.0, (double)animElapsed.elapsed() / ANIM_DURATION_MS);
+  // ease in-out cubic
+  double et = t < 0.5 ? 4.0 * t * t * t : 1.0 - 4.0 * (1.0 - t) * (1.0 - t) * (1.0 - t) / 2.0;
+
+  for(int a = 0; a < rows.length() && a < animStartY.length() && a < animTargetY.length(); ++a) {
+    rows.at(a)->getLetters()->setY(animStartY.at(a) + (animTargetY.at(a) - animStartY.at(a)) * et);
+  }
+
+  if(t >= 1.0) {
+    animTimer->stop();
+    animating = false;
+  }
+
+  updateAll();
 }

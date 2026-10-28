@@ -71,7 +71,9 @@ MainWindow::MainWindow(QSettings &config) : config(config)
   setWindowTitle(QApplication::applicationName() + QString(" v%1.%2.%3").arg(PROJECT_VERSION_MAJOR).arg(PROJECT_VERSION_MINOR).arg(PROJECT_VERSION_PATCH));
 
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  setAlignment(Qt::AlignLeft | Qt::AlignTop);
+  setFrameShape(QFrame::NoFrame);
 
   showFullScreen();
   qApp->processEvents();
@@ -355,6 +357,7 @@ bool MainWindow::eventFilter(QObject *, QEvent *event)
       }
       currentChart->makeIdle();
       setScene(charts.at(chosen));
+      setSceneRect(charts.at(chosen)->sceneRect());
       printf("Chart '%s' activated!\n", qPrintable(charts.at(chosen)->objectName()));
       return true;
     }
@@ -411,6 +414,12 @@ void MainWindow::updateFromConfig()
   }
   if(!config.contains("main/enableVideoPlayer")) {
     config.setValue("main/enableVideoPlayer", true);
+  }
+  if(!config.contains("main/redValue")) {
+    config.setValue("main/redValue", 210);
+  }
+  if(!config.contains("main/greenValue")) {
+    config.setValue("main/greenValue", 210);
   }
 
   // Touch controls
@@ -470,8 +479,8 @@ void MainWindow::updateFromConfig()
   mainSettings.pxPerMm = 500.0 / mainSettings.rulerWidth;
   // At 6 m distance (size 0.1) a letter should be 87.3 mm tall on screen (5 arc minutes)
   mainSettings.pxPerArcMin = (87.3 / 5.0) * mainSettings.pxPerMm;
-  mainSettings.hexRed = "#" + QString::number(config.value("main/redValue").toInt(), 16) + "0000";
-  mainSettings.hexGreen = "#00" + QString::number(config.value("main/greenValue").toInt(), 16) + "00";
+  mainSettings.hexRed = "#" + QString::number(config.value("main/redValue").toInt(), 16).rightJustified(2, '0') + "0000";
+  mainSettings.hexGreen = "#00" + QString::number(config.value("main/greenValue").toInt(), 16).rightJustified(2, '0') + "00";
 
   mainSettings.chartsXml = config.value("main/chartsXml").toString();
   mainSettings.startingChart = config.value("main/startingChart").toString();

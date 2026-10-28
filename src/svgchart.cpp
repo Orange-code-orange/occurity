@@ -46,7 +46,7 @@ SvgChart::~SvgChart()
 void SvgChart::init()
 {
   svgItem = new QGraphicsSvgItem();
-  svgItem->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+  svgItem->setCacheMode(QGraphicsItem::NoCache);
   addItem(svgItem);
 
   titleItem->setText(objectName());
@@ -116,20 +116,26 @@ void SvgChart::updateAll()
     svgXmlLoaded = svgXml;
   }
 
-  if(!layers.isEmpty() && svgIdx <= layers.size())
+  if(!layers.isEmpty() && svgIdx < layers.size())
     svgItem->setElementId(layers.at(svgIdx));
-  else
-    svgItem->setElementId("");
+  else if(!layers.isEmpty())
+    svgItem->setElementId(layers.at(0));
 
-  if(scaling == "width") {
-    svgItem->setScale(mainSettings.width / svgItem->renderer()->defaultSize().width());
-  } else if(scaling == "height") {
-    svgItem->setScale((double)mainSettings.height / svgItem->renderer()->defaultSize().height());
+  QSizeF svgSize = layers.isEmpty()
+    ? QSizeF(svgItem->renderer()->defaultSize())
+    : svgItem->renderer()->boundsOnElement(svgItem->elementId()).size();
+
+  if(scaling == "width" && svgSize.width() > 0) {
+    svgItem->setScale(mainSettings.width / svgSize.width());
+  } else if(scaling == "height" && svgSize.height() > 0) {
+    svgItem->setScale((double)mainSettings.height / svgSize.height());
   } else if(scaling == "distance") {
     svgItem->setScale((mainSettings.pxPerArcMin / 100.0) * mainSettings.distanceFactor);
   }
-  svgItem->setX((mainSettings.width / 2.0) - (svgItem->mapRectToScene(svgItem->boundingRect()).width()) / 2.0);
-  svgItem->setY((mainSettings.height / 2.0) - (svgItem->mapRectToScene(svgItem->boundingRect()).height()) / 2.0);
+  double scaledW = svgSize.width() * svgItem->scale();
+  double scaledH = svgSize.height() * svgItem->scale();
+  svgItem->setX((mainSettings.width  / 2.0) - scaledW / 2.0);
+  svgItem->setY((mainSettings.height / 2.0) - scaledH / 2.0);
 
   // Re-add title
   QFont font;

@@ -33,6 +33,8 @@
 
 #include <QGraphicsItem>
 #include <QGraphicsProxyWidget>
+#include <QTimer>
+#include <QElapsedTimer>
 
 class OptotypeChart : public AbstractChart
 {
@@ -64,6 +66,7 @@ protected:
 
 private slots:
   void hideFromList();
+  void animStep();
 
 private:
   QString startSize = "0.16";
@@ -76,10 +79,18 @@ private:
   double crowdingSpan = 2.5;
   QString animation = "";
 
-  int skew = 0;
   double spaceWidth = 0.0;
 
   void positionReset();
+  QString snellenFraction(double decimal);
+  QList<double> computeTargetY() const;
+
+  QTimer *animTimer = nullptr;
+  QElapsedTimer animElapsed;
+  QList<double> animStartY;
+  QList<double> animTargetY;
+  bool animating = false;
+  static const int ANIM_DURATION_MS = 300;
 
   QList<QGraphicsItem *> hideList;
 
@@ -88,6 +99,11 @@ private:
   QGraphicsSimpleTextItem *sizeItem;
   QGraphicsSimpleTextItem *copyrightItem;
   QGraphicsRectItem *crowdRect;
+  QGraphicsPathItem *highlightRect = nullptr;
+  QGraphicsLineItem *highlightLine = nullptr;
+  bool highlightVisible = true;
+  QList<QGraphicsSimpleTextItem *> rowLeftLabels;
+  QList<QGraphicsSimpleTextItem *> rowRightLabels;
 
 };
 #endif/*__OCCURITY_OPTOTYPECHART_H__*/
