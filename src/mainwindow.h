@@ -31,6 +31,7 @@
 #include "svgchart.h"
 #include "optotypechart.h"
 #include "videoplayer.h"
+#include "screensaver.h"
 #include "mainsettings.h"
 
 #include <QGraphicsView>
@@ -55,14 +56,14 @@ signals:
 
 private slots:
   void init();
-  void monitorSleep();
-  void monitorOn();
+  void showScreenSaver();
   void hideCursor();
 
 private:
   QSettings &config;
   MainSettings mainSettings;
   VideoPlayer *videoPlayer = nullptr;
+  ScreenSaver *screenSaver = nullptr;
   void loadFonts(QString dirStr);
   bool loadCharts(QString chartsXml);
   void spawnPreferences();
@@ -71,20 +72,11 @@ private:
 
   QList<AbstractChart*> charts;
 
-  // Sleep timer that puts monitor to sleep after X minutes of inactivity
+  // Timer that shows the screensaver after X minutes of inactivity
   QTimer sleepTimer;
 
   // Timer that resets all charts after being idle for configured time
   QTimer resetTimer;
-
-  // The following bool is needed to make a 'q' button press work for making the monitor wake up again
-  bool monitorIsOn = true;
-
-  // Timer used to delay sleep activation to avoid the monitor turning back on due to remote control double-presses
-  QTimer delayedSleepTimer;
-
-  // Opposite of the above. If 'q' is pressed while monitor is off the monitorIsOn bool must be set to 'true' after a delay to avoid a double-press to keep turning it off while it already is off.
-  QTimer delayedMonitorOnTimer;
 
   // Timer to hide the mouse cursor after a period of inactivity when showMouse is false
   QTimer mouseHideTimer;

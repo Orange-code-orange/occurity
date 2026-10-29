@@ -29,6 +29,7 @@ qt_add_resources(QT_RESOURCES
 set(SOURCES
   src/main.cpp
   src/mainwindow.cpp
+  src/screensaver.cpp
   src/videoplayer.cpp
   src/pindialog.cpp
   src/preferences.cpp

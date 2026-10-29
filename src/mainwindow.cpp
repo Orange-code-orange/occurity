@@ -107,18 +107,14 @@ MainWindow::MainWindow(QSettings &config) : config(config)
                                   this);
   }
 
+  screenSaver = new ScreenSaver(mainSettings.width, mainSettings.height,
+                                config.value("main/screensaverFps", 30).toInt(),
+                                this);
+
   // Initial interval was set in updateFromConfig;
   sleepTimer.setSingleShot(true);
-  connect(&sleepTimer, &QTimer::timeout, this, &MainWindow::monitorSleep);
+  connect(&sleepTimer, &QTimer::timeout, this, &MainWindow::showScreenSaver);
   sleepTimer.start();
-
-  delayedSleepTimer.setInterval(1000);
-  delayedSleepTimer.setSingleShot(true);
-  connect(&delayedSleepTimer, &QTimer::timeout, this, &MainWindow::monitorSleep);
-
-  delayedMonitorOnTimer.setInterval(1000);
-  delayedMonitorOnTimer.setSingleShot(true);
-  connect(&delayedMonitorOnTimer, &QTimer::timeout, this, &MainWindow::monitorOn);
 
   // Initial interval was set in updateFromConfig;
   resetTimer.setSingleShot(true);
@@ -298,18 +294,22 @@ bool MainWindow::eventFilter(QObject *, QEvent *event)
     if(!config.value("touch/showMouse", false).toBool()) {
       mouseHideTimer.start();
     }
-    monitorIsOn = true;
+    if(screenSaver != nullptr && screenSaver->isVisible()) {
+      screenSaver->stop();
+    }
     return false;
   }
   if(event->type() == QEvent::MouseButtonPress) {
     sleepTimer.start();
     resetTimer.start();
+    if(screenSaver != nullptr && screenSaver->isVisible()) {
+      screenSaver->stop();
+    }
     QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
     if(mouseEvent->button() == Qt::RightButton) {
       spawnPreferences();
       return true;
     }
-    monitorIsOn = true;
     return false;
   }
   if(event->type() == QEvent::KeyPress) {
@@ -318,6 +318,12 @@ bool MainWindow::eventFilter(QObject *, QEvent *event)
 
     // Restart reset timer
     resetTimer.start();
+
+    // Dismiss the screensaver on any key press; the key then falls through so
+    // it also performs its normal action.
+    if(screenSaver != nullptr && screenSaver->isVisible()) {
+      screenSaver->stop();
+    }
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
@@ -369,11 +375,7 @@ bool MainWindow::eventFilter(QObject *, QEvent *event)
       spawnJobRunner();
       return true;
     } else if(keyEvent->key() == Qt::Key_Q) {
-      if(monitorIsOn) {
-        delayedSleepTimer.start();
-      } else {
-        delayedMonitorOnTimer.start();
-      }
+      showScreenSaver();
       return true;
     } else if(keyEvent->key() == Qt::Key_S) {
       if(videoPlayer != nullptr) {
@@ -383,7 +385,6 @@ bool MainWindow::eventFilter(QObject *, QEvent *event)
       }
       return true;
     }
-    monitorIsOn = true;
   }
   return false;
 }
@@ -400,8 +401,11 @@ void MainWindow::updateFromConfig()
   if(!config.contains("main/minutesBeforeSizeReset")) {
     config.setValue("main/minutesBeforeSizeReset", 5);
   }
-  if(!config.contains("main/minutesBeforeSleep")) {
-    config.setValue("main/minutesBeforeSleep", 120);
+  if(!config.contains("main/minutesBeforeScreensaver")) {
+    config.setValue("main/minutesBeforeScreensaver", 10);
+  }
+  if(!config.contains("main/screensaverFps")) {
+    config.setValue("main/screensaverFps", 30);
   }
   if(!config.contains("main/rowSkipDelta")) {
     config.setValue("main/rowSkipDelta", 4);
@@ -447,7 +451,7 @@ void MainWindow::updateFromConfig()
   resetTimer.setInterval(config.value("main/minutesBeforeSizeReset").toInt() * 1000 * 60); // Minutes
   resetTimer.start();
 
-  sleepTimer.setInterval(config.value("main/minutesBeforeSleep").toInt() * 1000 * 60); // Minutes
+  sleepTimer.setInterval(config.value("main/minutesBeforeScreensaver").toInt() * 1000 * 60); // Minutes
   // Don't start sleepTimer here, just set the interval. The next keypress will start it.
 
   mainSettings.rowSkipDelta = config.value("main/rowSkipDelta").toInt();
@@ -515,15 +519,11 @@ void MainWindow::spawnJobRunner()
   }
 }
 
-void MainWindow::monitorSleep()
+void MainWindow::showScreenSaver()
 {
-  QProcess::execute("bash", {"./scripts/sleep.sh"});
-  monitorIsOn = false;
-}
-
-void MainWindow::monitorOn()
-{
-  monitorIsOn = true;
+  if(screenSaver != nullptr && !screenSaver->isVisible()) {
+    screenSaver->start();
+  }
 }
 
 void MainWindow::hideCursor()

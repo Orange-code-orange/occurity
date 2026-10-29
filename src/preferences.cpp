@@ -66,7 +66,7 @@ Preferences::Preferences(QSettings &config, const QList<AbstractChart *> charts,
   }
 
   Slider *minutesBeforeSizeReset = new Slider(config, "main", "minutesBeforeSizeReset", tr("Idle time before size reset (minutes):"), 1, 60, 5, 1, this);
-  Slider *minutesBeforeSleep = new Slider(config, "main", "minutesBeforeSleep", tr("Idle time before putting the monitor to sleep (minutes):"), 5, 480, 120, 5, this);
+  Slider *minutesBeforeScreensaver = new Slider(config, "main", "minutesBeforeScreensaver", tr("Idle time before showing the screensaver (minutes):"), 1, 480, 10, 1, this);
   Slider *hexRed = new Slider(config, "main", "redValue", tr("Red color value:"), 0, 255, 210, 1, this);
   Slider *hexGreen = new Slider(config, "main", "greenValue", tr("Green color value:"), 0, 255, 210, 1, this);
   Slider *rowSkipDelta = new Slider(config, "main", "rowSkipDelta", tr("Skip this many lines when using multiline row skipping:"), 2, 10, 4, 1, this);
@@ -82,7 +82,7 @@ Preferences::Preferences(QSettings &config, const QList<AbstractChart *> charts,
   configLayout->addWidget(patientDistance);
   configLayout->addWidget(startingChart);
   configLayout->addWidget(minutesBeforeSizeReset);
-  configLayout->addWidget(minutesBeforeSleep);
+  configLayout->addWidget(minutesBeforeScreensaver);
   configLayout->addWidget(hexRed);
   configLayout->addWidget(hexGreen);
   configLayout->addWidget(rowSkipDelta);
