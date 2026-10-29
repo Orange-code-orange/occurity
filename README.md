@@ -19,7 +19,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 In order to install a system running Occurity you need the following hardware:
 
 **Required**
-* A Raspberry Pi (3 or 4, 4 required for attention video support)
+* A Raspberry Pi (3 or 4)
 * At least a 2 GB SD flash card
 * A monitor with at least 300 cd/m² brightness (preferably 350 cd/m²)
 
@@ -174,10 +174,6 @@ The following keyboard keys are in use when running Occurity.
 * `q`: Enable / disable standby
 * `j`: Open Job Runner dialog (requires pin-code, documented [here](docs/CONFIGINI.md))
 * `p`: Open Preferences dialog (requires pin-code, documented [here](docs/CONFIGINI.md))
-* `s`: Play attention video (only on RPi4 and above)
-* `d`: Pause / resume attention video (only on RPi4 and above)
-* `f`: Stop attention video (only on RPi4 and above)
-* `g`: Play next attention video (only on RPi4 and above)
 
 ### Optotype chart specific keyboard functions
 * `up`: Change to next row with bigger size
@@ -189,7 +185,6 @@ The following keyboard keys are in use when running Occurity.
 * `c`: Enable / disable crowding
 * `m`: Switch between single and multisymbol from the selected row. Use left / right to move between them
 * `r`: Randomize symbols from selected row
-* `a`: Enable / disable attention animation (if one is defined for the chart in [charts.xml](docs/CHARTSXML.md))
 
 ### SVG chart specific keyboard functions
 * `left / right`: Switch between SVG layers defined in [charts.xml](docs/CHARTSXML.md)

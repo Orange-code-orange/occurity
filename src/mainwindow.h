@@ -30,7 +30,6 @@
 #include "abstractchart.h"
 #include "svgchart.h"
 #include "optotypechart.h"
-#include "videoplayer.h"
 #include "screensaver.h"
 #include "mainsettings.h"
 
@@ -62,7 +61,6 @@ private slots:
 private:
   QSettings &config;
   MainSettings mainSettings;
-  VideoPlayer *videoPlayer = nullptr;
   ScreenSaver *screenSaver = nullptr;
   void loadFonts(QString dirStr);
   bool loadCharts(QString chartsXml);

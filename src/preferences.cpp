@@ -48,7 +48,7 @@ Preferences::Preferences(QSettings &config, const QList<AbstractChart *> charts,
 {
   setFixedSize(1200, 850);
   setWindowIcon(QIcon(":icon.png"));
-  setWindowTitle(QApplication::applicationName() + QString(" v%1.%2.%3").arg(PROJECT_VERSION_MAJOR).arg(PROJECT_VERSION_MINOR).arg(PROJECT_VERSION_PATCH) + " preferences");
+  setWindowTitle(QApplication::applicationName() + QString(" v%1.%2.%3").arg(PROJECT_VERSION_MAJOR).arg(PROJECT_VERSION_MINOR).arg(PROJECT_VERSION_PATCH) + tr(" preferences"));
 
   About *tabWidget = new About(this);
   tabWidget->setFocusPolicy(Qt::NoFocus);

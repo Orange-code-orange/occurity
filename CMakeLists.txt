@@ -18,7 +18,7 @@ endif()
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Xml SvgWidgets MultimediaWidgets Multimedia Network LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Xml SvgWidgets Network LinguistTools)
 
 qt_standard_project_setup()
 
@@ -30,7 +30,6 @@ set(SOURCES
   src/main.cpp
   src/mainwindow.cpp
   src/screensaver.cpp
-  src/videoplayer.cpp
   src/pindialog.cpp
   src/preferences.cpp
   src/about.cpp
@@ -51,7 +50,7 @@ set(SOURCES
 # Update translation from sources, use 'make Occurity_lupdate' to update the ts file
 # This function needs to be updated when migrating to Qt6.7 or later as the format has changed
 qt_add_lupdate(Occurity
-  TS_FILES occurity_da_DK.ts
+  TS_FILES occurity_da_DK.ts occurity_es.ts
   SOURCES ${SOURCES}
 )
 
@@ -67,7 +66,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 # target_compile_options(Occurity PRIVATE -g) <-- This is auto-added by cmake for a 'Debug' release
 endif()
 
-target_link_libraries(Occurity PRIVATE Qt6::Widgets Qt6::Xml Qt6::SvgWidgets Qt6::MultimediaWidgets Qt6::Multimedia Qt6::Network)
+target_link_libraries(Occurity PRIVATE Qt6::Widgets Qt6::Xml Qt6::SvgWidgets Qt6::Network)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -86,6 +85,7 @@ install(FILES
   ${CMAKE_SOURCE_DIR}/charts.xml.example
   ${CMAKE_SOURCE_DIR}/LICENSE
   ${CMAKE_SOURCE_DIR}/occurity_da_DK.qm
+  ${CMAKE_SOURCE_DIR}/occurity_es.qm
   ${CMAKE_SOURCE_DIR}/README.md
   DESTINATION .
 )
@@ -97,6 +97,5 @@ install(DIRECTORY
   ${CMAKE_SOURCE_DIR}/scripts
   ${CMAKE_SOURCE_DIR}/jobs
   ${CMAKE_SOURCE_DIR}/svg
-  ${CMAKE_SOURCE_DIR}/videos
   DESTINATION .
 )

@@ -42,7 +42,6 @@ Must be nested in the `group` node. This defines a single chart to be used by th
 * `optotype="sloan"` (required): Which optotype is used by this chart. This MUST correspond to the name of a subdirectory located in the `optotypes` subfolder. In this case `optotypes/sloan`.
 * `startsize="0.1"`: Sets optotype size on initialization. Size must match with a size from a `row` below.
 * `crowdingspan="2.5"`: Sets optotype crowding span in size relative arc minutes. If left out the default value of 2.5 is used.
-* `animation="file.gif"`: Sets the attention GIF animation for this chart. Activate with `a`.
 * `fadetimings="0;50;150;150"`: Defines the optotype fade timings. There are three relevant timings. 1: Used when fading in a symbol, 2: Used when fading out a symbol, 3 and 4: Used when momentarily showing a symbol (fade in / out). All values are in ms.
 * `fadelevels="0.0;1.0;0.15"`: Defines the optotype fade levels. There are three relevant levels. 1: Opacity when showing a symbol, 2: Opacity when hiding a symbol, 3: Opacity when momentarily showing a symbol. All values can range from 0.0 to 1.0. Completely opaque is 1.0.
 

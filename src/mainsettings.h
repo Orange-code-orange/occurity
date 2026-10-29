@@ -27,8 +27,6 @@
 #ifndef MAINSETTINGS_H
 #define MAINSETTINGS_H
 
-#include "videoplayer.h"
-
 #include <QString>
 
 struct MainSettings {
@@ -39,8 +37,6 @@ struct MainSettings {
   QString jobsFolder = "./jobs";
   QString optotypesFolder = "./optotypes";
   bool useRowCaptions = false;
-  bool enableVideoPlayer = true;
-  QString videosFolder = "./videos";
   bool updatePretend = false;
   double patientDistance = 600.0;
   double distanceFactor = 1.0;

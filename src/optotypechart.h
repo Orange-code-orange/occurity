@@ -32,7 +32,6 @@
 #include "optotyperow.h"
 
 #include <QGraphicsItem>
-#include <QGraphicsProxyWidget>
 #include <QTimer>
 #include <QElapsedTimer>
 
@@ -44,12 +43,10 @@ public:
   OptotypeChart(MainSettings &mainSettings, QObject *parent);
   ~OptotypeChart();
   void init() override;
-  void makeIdle() override;
   void setOptotype(const QString &optotype);
   QString getOptotype();
   void setCrowdingSpan(const double &crowdingSpan);
   double getCrowdingSpan();
-  void setAnimation(const QString &animation);
   void setSize(const QString &sizeStr) override;
   QString getSize() override;
   void addRow(const QString &size, const QString &row, const QString &caption = "");
@@ -73,11 +70,8 @@ private:
   QString fadeTimings = ""; // Defaults are in optosymbol.cpp
   QString fadeLevels = ""; // Defaults are in optosymbol.cpp
 
-  QGraphicsProxyWidget *animItem = nullptr;
-
   QString optotype = "";
   double crowdingSpan = 2.5;
-  QString animation = "";
 
   double spaceWidth = 0.0;
 

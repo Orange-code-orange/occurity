@@ -19,8 +19,8 @@ La Raspberry Pi ejecuta Occurity y tiene su propio clon del repo que actualiza p
 | Dato | Valor |
 |------|-------|
 | Usuario | `juan` |
-| Host mDNS | `occurity.local` (a veces NO resuelve desde WSL) |
-| IP (hotspot) | `172.20.10.7` (usar esta si `occurity.local` falla) |
+| Host mDNS | `occurity.local` (NO resuelve desde WSL; desde Windows a veces resuelve primero a IPv6) |
+| IP | **VARIABLE** — depende de la red. Resuélvela antes de desplegar con `ping -4 -n 1 occurity.local` desde Windows. Vistas hasta ahora: `172.20.10.7` (hotspot), `192.168.1.66` (LAN) |
 | Contraseña | `guayaba` |
 | Repo en la Pi | `~/occurity` |
 | Dir runtime (cwd de Occurity) | `~/occurity/release` |
@@ -39,13 +39,24 @@ echo "Listo"
 
 (Un watchdog relanza Occurity automáticamente tras el `pkill`.)
 
+### Paso 0: resolver la IP de la Pi (la IP cambia según la red)
+
+Desde Windows, forzando IPv4 (mDNS puede devolver primero IPv6, que WSL no puede usar):
+
+```bash
+ping -4 -n 1 occurity.local    # muestra la IPv4 actual, p.ej. 192.168.1.66
+```
+
+Usa esa IP en todos los comandos SSH siguientes (sustituye `$PI_IP`).
+
 ### Cómo conectarse por SSH (importante)
 
 El SSH nativo de Windows NO acepta la contraseña por script. Hay que usar **WSL (Ubuntu-24.04)** con el truco `SSH_ASKPASS`.
-`/tmp/askpass.sh` se borra entre invocaciones de WSL, así que **recréalo en cada comando**:
+`/tmp/askpass.sh` se borra entre invocaciones de WSL, así que **recréalo en cada comando**.
+WSL NO resuelve `occurity.local` → siempre usa la IPv4 resuelta en el paso 0:
 
 ```bash
-wsl -d Ubuntu-24.04 -- bash -c "printf '#!/bin/bash\necho guayaba\n' > /tmp/askpass.sh; chmod +x /tmp/askpass.sh; export SSH_ASKPASS=/tmp/askpass.sh SSH_ASKPASS_REQUIRE=force DISPLAY=:0; ssh -o StrictHostKeyChecking=no juan@172.20.10.7 'COMANDO_REMOTO'"
+wsl -d Ubuntu-24.04 -- bash -c "printf '#!/bin/bash\necho guayaba\n' > /tmp/askpass.sh; chmod +x /tmp/askpass.sh; export SSH_ASKPASS=/tmp/askpass.sh SSH_ASKPASS_REQUIRE=force DISPLAY=:0; ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 juan@$PI_IP 'COMANDO_REMOTO'"
 ```
 
 ### Procedimiento completo
@@ -59,9 +70,9 @@ wsl -d Ubuntu-24.04 -- bash -c "printf '#!/bin/bash\necho guayaba\n' > /tmp/askp
    Terminar los mensajes de commit con:
    `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
 
-2. **Ejecutar `actualizar.sh` en la Pi** (hace pull + build + restart):
+2. **Ejecutar `actualizar.sh` en la Pi** (hace pull + build + restart; `$PI_IP` = IP del paso 0):
    ```bash
-   wsl -d Ubuntu-24.04 -- bash -c "printf '#!/bin/bash\necho guayaba\n' > /tmp/askpass.sh; chmod +x /tmp/askpass.sh; export SSH_ASKPASS=/tmp/askpass.sh SSH_ASKPASS_REQUIRE=force DISPLAY=:0; ssh -o StrictHostKeyChecking=no juan@172.20.10.7 '~/actualizar.sh'"
+   wsl -d Ubuntu-24.04 -- bash -c "printf '#!/bin/bash\necho guayaba\n' > /tmp/askpass.sh; chmod +x /tmp/askpass.sh; export SSH_ASKPASS=/tmp/askpass.sh SSH_ASKPASS_REQUIRE=force DISPLAY=:0; ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 juan@$PI_IP '~/actualizar.sh'"
    ```
 
 3. **Verificar**:
@@ -85,5 +96,6 @@ ssh ... "cd ~/occurity && cp release/charts.xml release/charts.xml.bak && cp cha
 ### Problemas conocidos
 
 - Si `git pull` falla por "local changes would be overwritten" en la Pi: suelen ser restos de `scp` manuales de sesiones viejas y ya están en GitHub. Guárdalos con `git stash push -m "..."` (recuperable) y reintenta `actualizar.sh`.
-- `occurity.local` no siempre resuelve desde WSL → usar la IP `172.20.10.7`.
+- **La IP de la Pi cambia según la red** → resuélvela siempre con `ping -4 -n 1 occurity.local` (paso 0) antes de desplegar. `occurity.local` no resuelve desde WSL y desde Windows puede devolver IPv6 primero (por eso `-4`).
+- Timeouts intermitentes en el puerto 22 tras cambiar de red/IP: confirma primero con `ping` desde Windows y WSL, resuelve la IP de nuevo y reintenta.
 - Las rutas relativas en SSH parten de `~` (home), no de `~/occurity`: usa `cd ~/occurity &&` o rutas absolutas.

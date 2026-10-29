@@ -36,8 +36,6 @@
 #include <QMap>
 #include <QMessageBox>
 #include <QRandomGenerator>
-#include <QLabel>
-#include <QMovie>
 #include <QPainterPath>
 
 OptotypeChart::OptotypeChart(MainSettings &mainSettings, QObject *parent) :
@@ -54,21 +52,6 @@ OptotypeChart::~OptotypeChart()
 
 void OptotypeChart::init()
 {
-  if(!animation.isEmpty() && QFileInfo::exists(animation)) {
-    QFileInfo animInfo(animation);
-    if(animInfo.suffix() == "gif") {
-      QLabel *gifAnim = new QLabel();
-      QMovie *movie = new QMovie(animation);
-      gifAnim->setMovie(movie);
-      movie->start();
-      animItem = addWidget(gifAnim);
-      animItem->setZValue(-1);
-      animItem->setPos(mainSettings.width / 2.0 - animItem->boundingRect().width() / 2.0,
-                       mainSettings.height / 4.0 - animItem->boundingRect().height() / 2.0);
-      animItem->hide();
-    }
-  }
-
   crowdRect = addRect(0, 0, 10, 10);
 
   highlightRect = addPath(QPainterPath(), QPen(Qt::NoPen), QBrush());
@@ -111,13 +94,6 @@ void OptotypeChart::init()
   connect(animTimer, &QTimer::timeout, this, &OptotypeChart::animStep);
 
   setSize(startSize);
-}
-
-void OptotypeChart::makeIdle()
-{
-  if(animItem != nullptr) {
-    animItem->hide();
-  }
 }
 
 void OptotypeChart::keyPressEvent(QKeyEvent *event)
@@ -172,12 +148,6 @@ void OptotypeChart::keyPressEvent(QKeyEvent *event)
       int chosen = QRandomGenerator::global()->bounded(availableCoords.length());
       child->setPos(availableCoords.at(chosen));
       availableCoords.removeAt(chosen);
-    }
-  } else if(event->key() == Qt::Key_A && animItem != nullptr) {
-    if(animItem->isVisible()) {
-      animItem->hide();
-    } else {
-      animItem->show();
     }
   }
 
@@ -512,11 +482,6 @@ void OptotypeChart::positionReset()
   for(const auto &child: rows.at(currentRowIdx)->getLetters()->childItems()) {
     child->setPos(child->data(0).toPointF());
   }
-}
-
-void OptotypeChart::setAnimation(const QString &animation)
-{
-  this->animation = animation;
 }
 
 void OptotypeChart::hideFromList()

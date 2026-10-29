@@ -40,31 +40,6 @@
 #include <QProcess>
 #include <QDomDocument>
 
-bool videoPlaybackSupported()
-{
-  QFile f("/proc/device-tree/model");
-  if(f.exists()) {
-    if(f.open(QIODevice::ReadOnly)) {
-      QByteArray model = f.readAll();
-      if(model.left(13) == "Raspberry Pi ") {
-        if(model.mid(13, 1).toInt() >= 4) {
-          printf("Detected Raspberry Pi 4 or higher, enabling video playback...\n\n");
-          return true;
-        }
-      } else {
-        printf("'/proc/device-tree/model' detected, but apparently not a Raspberry Pi.\n");
-        printf("Assuming user wants video playback so enabling it...\n\n");
-        return true;
-      }
-    }
-  } else {
-    printf("'/proc/device-tree/model' doesn't exist, maybe not running on a Yocto image?\n");
-    printf("Assuming user wants video playback so enabling it...\n\n");
-    return true;
-  }
-  return false;
-}
-
 MainWindow::MainWindow(QSettings &config) : config(config)
 {
   printf("Running %s\n", qPrintable(QApplication::applicationName() + QString(" v%1.%2.%3").arg(PROJECT_VERSION_MAJOR).arg(PROJECT_VERSION_MINOR).arg(PROJECT_VERSION_PATCH)));
@@ -101,12 +76,6 @@ MainWindow::MainWindow(QSettings &config) : config(config)
   setMouseTracking(true);
   viewport()->setMouseTracking(true);
 
-  if(mainSettings.enableVideoPlayer && videoPlaybackSupported()) {
-    videoPlayer = new VideoPlayer(mainSettings.videosFolder,
-                                  mainSettings.width, mainSettings.height,
-                                  this);
-  }
-
   screenSaver = new ScreenSaver(mainSettings.width, mainSettings.height,
                                 config.value("main/screensaverFps", 30).toInt(),
                                 this);
@@ -129,9 +98,6 @@ MainWindow::MainWindow(QSettings &config) : config(config)
 
 MainWindow::~MainWindow()
 {
-  if(videoPlayer != nullptr) {
-    delete videoPlayer;
-  }
 }
 
 void MainWindow::init()
@@ -230,9 +196,6 @@ bool MainWindow::loadCharts(QString chartsXml)
         printf("    Optotype: '%s'\n", qPrintable(static_cast<OptotypeChart*>(chart)->getOptotype()));
         if(xmlChart.hasAttribute("crowdingspan")) {
           static_cast<OptotypeChart*>(chart)->setCrowdingSpan(xmlChart.attribute("crowdingspan").toDouble());
-        }
-        if(xmlChart.hasAttribute("animation")) {
-          static_cast<OptotypeChart*>(chart)->setAnimation(xmlChart.attribute("animation"));
         }
         printf("    Crowding span: '%f'\n", static_cast<OptotypeChart*>(chart)->getCrowdingSpan());
         if(xmlChart.hasAttribute("startsize")) {
@@ -377,13 +340,6 @@ bool MainWindow::eventFilter(QObject *, QEvent *event)
     } else if(keyEvent->key() == Qt::Key_Q) {
       showScreenSaver();
       return true;
-    } else if(keyEvent->key() == Qt::Key_S) {
-      if(videoPlayer != nullptr) {
-        videoPlayer->show();
-        videoPlayer->setFocus();
-        videoPlayer->playPressed();
-      }
-      return true;
     }
   }
   return false;
@@ -416,9 +372,6 @@ void MainWindow::updateFromConfig()
   if(!config.contains("main/pinCode")) {
     config.setValue("main/pinCode", "4242");
   }
-  if(!config.contains("main/enableVideoPlayer")) {
-    config.setValue("main/enableVideoPlayer", true);
-  }
   if(!config.contains("main/redValue")) {
     config.setValue("main/redValue", 210);
   }
@@ -444,9 +397,6 @@ void MainWindow::updateFromConfig()
   if(!config.contains("folders/jobs")) {
     config.setValue("folders/jobs", "./jobs");
   }
-  if(!config.contains("folders/videos")) {
-    config.setValue("folders/videos", "./videos");
-  }
 
   resetTimer.setInterval(config.value("main/minutesBeforeSizeReset").toInt() * 1000 * 60); // Minutes
   resetTimer.start();
@@ -457,8 +407,6 @@ void MainWindow::updateFromConfig()
   mainSettings.rowSkipDelta = config.value("main/rowSkipDelta").toInt();
 
   mainSettings.useRowCaptions = config.value("main/useRowCaptions").toBool();
-
-  mainSettings.enableVideoPlayer = config.value("main/enableVideoPlayer").toBool();
 
   mainSettings.touchControls = config.value("touch/touchControls").toBool();
   mainSettings.leftHandedOperator = config.value("touch/leftHandedOperator").toBool();
@@ -473,8 +421,6 @@ void MainWindow::updateFromConfig()
   mainSettings.optotypesFolder = config.value("folders/optotypes").toString();
 
   mainSettings.jobsFolder = config.value("folders/jobs").toString();
-
-  mainSettings.videosFolder = config.value("folders/videos").toString();
 
   mainSettings.patientDistance = config.value("main/patientDistance").toDouble(); // Cm
   mainSettings.rulerWidth = config.value("main/rulerWidth").toDouble(); // Mm

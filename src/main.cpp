@@ -30,6 +30,7 @@
 #include <QStyleFactory>
 #include <QApplication>
 #include <QTranslator>
+#include <QLibraryInfo>
 #include <QDir>
 #include <QDateTime>
 #include <QSplashScreen>
@@ -120,8 +121,19 @@ int main(int argc, char *argv[])
     q.exec();
   }
 
+  // UI language. Defaults to Spanish ('es'), overridable via the 'language' key in
+  // config.ini (e.g. 'language=en' falls back to the untranslated English source).
+  QString uiLang = config.value("language", "es").toString();
+
+  // Qt's own translations for standard widgets (e.g. the OK button in dialogs).
+  QTranslator qtTranslator;
+  if(qtTranslator.load("qtbase_" + uiLang,
+                       QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
+    app.installTranslator(&qtTranslator);
+  }
+
   QTranslator translator;
-  if(translator.load("Occurity_" + QLocale::system().name())) {
+  if(translator.load("Occurity_" + uiLang)) {
     app.installTranslator(&translator);
   }
 

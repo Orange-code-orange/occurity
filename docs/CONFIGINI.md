@@ -12,11 +12,9 @@ You can configure several options of Occurity to fit your needs. The first time 
 * `hibernateTime=140`: After this many minutes of inactivity, the monitor will turn off to avoid burn-in. You can turn it back on by pressing `q`.
 * `rowSkipDelta=4`: The number of lines skipped when pressing `PgUp` and `PgDn` on optotype charts.
 * `pinCode=4242`: Sets the pincode to be entered in order to unlock the Preferences and Job Runner dialogs. It can be any length as long as it only contains numbers. Default is `4242`.
-* `enableVideoPlayer=true`: Enables or disables the integrated attention video player.
 * `touchControls=true`: Enables touch controls. Controls are configured on a per-chart basis as documented in the `chart` node [here](CHARTSXML.md#chart-nodes).
 * `leftHandedOperator=true`: Moves all touch controls to the right side of the screen.
 
 ## [folders]
 * `optotypes="your/optotypes/folder"`: Defines the optotypes folder to load chart optotypes from. Read more about the customizable optotype format [here](OPTOTYPES.md). Default is `./optotypes`.
-* `videos="your/videos/folder"`: Defines the attention videos folder. Only supports `.mp4` video files. Default is `./videos`. Recommended codec is h.264.
 * `jobs="your/jobs/folder"`: Defines the jobs folder. All `.job` files within this folder will be accessible through the Job Runner dialog (open with `j`). If a USB pen with a FAT32 partition named `USBPEN` is inserted which includes job files located at `%USBPATH%/occurity/jobs` those jobs will instead take priority over the jobs found at the configured folder. Default is `./jobs`.
