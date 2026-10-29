@@ -91,7 +91,8 @@ int main(int argc, char *argv[])
 
   QSettings config("config.ini", QSettings::IniFormat);
 
-  QPixmap pixmap(":splash.svg");
+  QPixmap pixmap(":logo-optilaz.png");
+  pixmap = pixmap.scaled(800, 800, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   QSplashScreen *splash = new QSplashScreen(pixmap);
   splash->setCursor(Qt::BlankCursor);
 
@@ -110,7 +111,7 @@ int main(int argc, char *argv[])
                       .arg(PROJECT_VERSION_MINOR)
                       .arg(PROJECT_VERSION_PATCH),
                       Qt::AlignLeft,
-                      Qt::white);
+                      Qt::black);
 
   app.processEvents();
   if(config.value("showSplash", true).toBool()) {
