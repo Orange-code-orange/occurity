@@ -132,8 +132,12 @@ int main(int argc, char *argv[])
     app.installTranslator(&qtTranslator);
   }
 
+  // NOTE: the .qm file is named lowercase 'occurity_<lang>.qm'. The filename case
+  // must match exactly: Linux (the Raspberry Pi) has a case-sensitive filesystem,
+  // so loading "Occurity_" here would silently fail there and fall back to English.
+  // Load from the application directory explicitly so it doesn't depend on the CWD.
   QTranslator translator;
-  if(translator.load("Occurity_" + uiLang)) {
+  if(translator.load("occurity_" + uiLang, QApplication::applicationDirPath())) {
     app.installTranslator(&translator);
   }
 

@@ -54,6 +54,15 @@ qt_add_lupdate(Occurity
   SOURCES ${SOURCES}
 )
 
+# Compile the .ts translations into .qm at build time. The .qm files are generated
+# (and git-ignored via '*.qm'), so they must NOT be committed: they are rebuilt here
+# from the committed .ts files, including on the Raspberry Pi. QM_FILES_OUTPUT_VARIABLE
+# gives us the generated paths to install alongside the executable.
+qt_add_lrelease(Occurity
+  TS_FILES occurity_da_DK.ts occurity_es.ts
+  QM_FILES_OUTPUT_VARIABLE QT_QM_FILES
+)
+
 qt_add_executable(Occurity WIN32
   ${SOURCES}
   ${QT_RESOURCES}
@@ -84,8 +93,7 @@ install(FILES
   ${CMAKE_SOURCE_DIR}/AUTHORS
   ${CMAKE_SOURCE_DIR}/charts.xml.example
   ${CMAKE_SOURCE_DIR}/LICENSE
-  ${CMAKE_SOURCE_DIR}/occurity_da_DK.qm
-  ${CMAKE_SOURCE_DIR}/occurity_es.qm
+  ${QT_QM_FILES}
   ${CMAKE_SOURCE_DIR}/README.md
   DESTINATION .
 )

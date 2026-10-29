@@ -60,7 +60,7 @@
     </chart>
   </group>
   <group numkey="2" touchcontrols="left,right,up,down,crowding,single,preferences">
-    <chart caption="Tumbling E" type="optotype" optotype="tumblinge" startsize="0.1" sizelock="true">
+    <chart caption="E giratoria" type="optotype" optotype="tumblinge" startsize="0.1" sizelock="true">
       <row size="0.05" caption="20/400">Ee;Es;En;Ee;Ew</row>
       <row size="0.067" caption="20/320">Ew;Es;Ee;Ew;En</row>
       <row size="0.08" caption="20/250">Es;Ew;En;Ee;Es</row>
@@ -100,7 +100,7 @@
     </chart>
   </group>
   <group numkey="3" touchcontrols="left,right,up,down,crowding,single,preferences">
-    <chart caption="Numbers" type="optotype" optotype="numbers" startsize="0.1" sizelock="true">
+    <chart caption="Números" type="optotype" optotype="numbers" startsize="0.1" sizelock="true">
       <row size="0.05" caption="20/400">32596</row>
       <row size="0.067" caption="20/320">59632</row>
       <row size="0.08" caption="20/250">65923</row>
@@ -121,18 +121,18 @@
     </chart>
   </group>
   <group numkey="5" touchcontrols="preferences">
-    <chart caption="Astigmatism dots" type="svg" source="svg/astigmatism_dots.svg" scaling="distance" touchcontrols="left,right">
+    <chart caption="Puntos de astigmatismo" type="svg" source="svg/astigmatism_dots.svg" scaling="distance" touchcontrols="left,right">
       <layer id="dots"/>
       <layer id="mask"/>
     </chart>
-    <chart caption="Astigmatism rays" type="svg" source="svg/astigmatism_rays.svg" scaling="height"/>
+    <chart caption="Rayos de astigmatismo" type="svg" source="svg/astigmatism_rays.svg" scaling="height"/>
   </group>
   <group numkey="6" touchcontrols="preferences">
-    <chart caption="RG" type="svg" source="svg/redgreen_mirrored.svg" bgcolor="black" scaling="width"/>
-    <chart caption="Worth four dots" type="svg" source="svg/worth_four_dots.svg" bgcolor="black" scaling="distance">
+    <chart caption="Rojo-verde" type="svg" source="svg/redgreen_mirrored.svg" bgcolor="black" scaling="width"/>
+    <chart caption="Cuatro puntos de Worth" type="svg" source="svg/worth_four_dots.svg" bgcolor="black" scaling="distance">
       <layer id="worthfourdots"/>
     </chart>
-    <chart caption="Coincidence" type="svg" source="svg/coincidence.svg" bgcolor="black" scaling="distance" touchcontrols="left,right">
+    <chart caption="Coincidencia" type="svg" source="svg/coincidence.svg" bgcolor="black" scaling="distance" touchcontrols="left,right">
       <layer id="horizontal"/>
       <layer id="vertical"/>
     </chart>
@@ -178,7 +178,7 @@
     </chart>
   </group>
   <group numkey="4" touchcontrols="left,right,preferences">
-    <chart caption="Ishihara Numbers" type="svg" source="svg/ishihara_numbers.svg" scaling="height" touchcontrols="left,right">
+    <chart caption="Ishihara Números" type="svg" source="svg/ishihara_numbers.svg" scaling="height" touchcontrols="left,right">
       <layer id="plate_01"/>
       <layer id="plate_02"/>
       <layer id="plate_03"/>
@@ -191,7 +191,7 @@
       <layer id="plate_10"/>
       <layer id="plate_11"/>
     </chart>
-    <chart caption="Ishihara Shapes" type="svg" source="svg/ishihara_shapes.svg" scaling="height" touchcontrols="left,right">
+    <chart caption="Ishihara Formas" type="svg" source="svg/ishihara_shapes.svg" scaling="height" touchcontrols="left,right">
       <layer id="plate_01"/>
       <layer id="plate_02"/>
       <layer id="plate_03"/>
