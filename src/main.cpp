@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
   QSettings config("config.ini", QSettings::IniFormat);
 
-  QPixmap pixmap(":logo-optilaz.png");
+  QPixmap pixmap(":splash-optilaz.png");
   pixmap = pixmap.scaled(800, 800, Qt::KeepAspectRatio, Qt::SmoothTransformation);
   QSplashScreen *splash = new QSplashScreen(pixmap);
   splash->setCursor(Qt::BlankCursor);
