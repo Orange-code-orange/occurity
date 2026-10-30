@@ -2,7 +2,7 @@
 /***************************************************************************
  *            screensaver.h
  *
- *  Lightweight animated OPTILAZ screensaver overlay
+ *  Animated OPTILAZ screensaver overlay
  ****************************************************************************/
 
 /*
@@ -27,20 +27,23 @@
 
 #include <QWidget>
 #include <QTimer>
-#include <QPointF>
 
-// Lightweight animated screensaver recreating the OPTILAZ logo as vector
-// graphics (no raster image is decoded per frame, keeping it Raspberry Pi
-// friendly). The eye "rings" (two navy arcs) counter-rotate, the yellow pupil
-// pulses and the "OPTILAZ" letters do a continuous vertical wave. The whole
-// logo group slowly drifts and bounces off the screen edges (DVD style) to
-// avoid screen burn-in.
+class QPainter;
+
+// Animated OPTILAZ screensaver. It is a faithful C++/QPainter reimplementation
+// of the reference web animation (salvapantallas-optilaz): a looping, 29 second
+// composition on a virtual 1920x1080 canvas scaled to fit the screen. The
+// sequence runs through five scenes -- Enfoque, Agudeza, Mirada, Marca and
+// Cierre -- recreating the exact timings and easings of the original. Only
+// vectors and text are drawn (no raster image is decoded per frame), keeping it
+// Raspberry Pi friendly. Soft "blur"/glow effects are approximated with radial
+// gradients so no expensive per-frame gaussian blur is needed.
 class ScreenSaver : public QWidget
 {
   Q_OBJECT
 
 public:
-  ScreenSaver(int width, int height, int fps = 30, QWidget *parent = nullptr);
+  ScreenSaver(int width, int height, int fps = 60, QWidget *parent = nullptr);
   void start();
   void stop();
 
@@ -51,16 +54,14 @@ private slots:
   void step();
 
 private:
+  // Draws the full composition for the current time 't' onto 'p'. 'p' is
+  // expected to already map the 1920x1080 canvas onto the widget.
+  void paintComposition(QPainter &p) const;
+
   QTimer animTimer;
-  // Accumulated animation time in seconds.
+  // Accumulated animation time in seconds, wrapped to the loop length.
   qreal t = 0.0;
   // Seconds between frames (1 / fps), used to advance 't'.
-  qreal frameSeconds = 1.0 / 30.0;
-
-  // Position (top-left of the logo group) and velocity for the drifting /
-  // bouncing movement.
-  QPointF groupPos;
-  QPointF groupVel;
-  QSizeF groupSize;
+  qreal frameSeconds = 1.0 / 60.0;
 };
 #endif/*__OCCURITY_SCREENSAVER_H__*/

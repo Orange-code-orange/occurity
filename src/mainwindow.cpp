@@ -77,7 +77,7 @@ MainWindow::MainWindow(QSettings &config) : config(config)
   viewport()->setMouseTracking(true);
 
   screenSaver = new ScreenSaver(mainSettings.width, mainSettings.height,
-                                config.value("main/screensaverFps", 30).toInt(),
+                                config.value("main/screensaverFps", 60).toInt(),
                                 this);
 
   // Initial interval was set in updateFromConfig;
@@ -361,7 +361,7 @@ void MainWindow::updateFromConfig()
     config.setValue("main/minutesBeforeScreensaver", 10);
   }
   if(!config.contains("main/screensaverFps")) {
-    config.setValue("main/screensaverFps", 30);
+    config.setValue("main/screensaverFps", 60);
   }
   if(!config.contains("main/rowSkipDelta")) {
     config.setValue("main/rowSkipDelta", 4);
