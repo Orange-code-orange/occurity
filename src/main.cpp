@@ -29,7 +29,6 @@
 
 #include <QStyleFactory>
 #include <QApplication>
-#include <QFontDatabase>
 #include <QTranslator>
 #include <QLibraryInfo>
 #include <QDir>
@@ -88,12 +87,6 @@ int main(int argc, char *argv[])
 
   // Install the custom debug message handler used by qDebug()
   qInstallMessageHandler(customMessageHandler);
-
-  // Register the Manrope font used by the OPTILAZ screensaver. If this fails
-  // (missing resource / unsupported engine) the screensaver falls back to a
-  // bold sans-serif, so a failure here is non-fatal.
-  QFontDatabase::addApplicationFont(":/Manrope-ExtraBold.ttf");
-  QFontDatabase::addApplicationFont(":/Manrope-SemiBold.ttf");
 
   QDir::setCurrent(QApplication::applicationDirPath());
 

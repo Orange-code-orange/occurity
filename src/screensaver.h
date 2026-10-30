@@ -2,7 +2,7 @@
 /***************************************************************************
  *            screensaver.h
  *
- *  Animated OPTILAZ screensaver overlay
+ *  Looping OPTILAZ video screensaver overlay
  ****************************************************************************/
 
 /*
@@ -26,42 +26,35 @@
 #define __OCCURITY_SCREENSAVER_H__
 
 #include <QWidget>
-#include <QTimer>
 
-class QPainter;
+class QMediaPlayer;
+class QAudioOutput;
+class QVideoWidget;
+class QResizeEvent;
 
-// Animated OPTILAZ screensaver. It is a faithful C++/QPainter reimplementation
-// of the reference web animation (salvapantallas-optilaz): a looping, 29 second
-// composition on a virtual 1920x1080 canvas scaled to fit the screen. The
-// sequence runs through five scenes -- Enfoque, Agudeza, Mirada, Marca and
-// Cierre -- recreating the exact timings and easings of the original. Only
-// vectors and text are drawn (no raster image is decoded per frame), keeping it
-// Raspberry Pi friendly. Soft "blur"/glow effects are approximated with radial
-// gradients so no expensive per-frame gaussian blur is needed.
+// OPTILAZ screensaver. Plays the branded OPTILAZ video
+// (videos/salvapantallas-optilaz.mp4) full screen in an endless loop. Hardware
+// video decoding keeps it smooth on the Raspberry Pi, where the previous
+// per-frame QPainter animation stuttered. The widget is transparent to mouse
+// events so the MainWindow event filter stays the single input handler and can
+// dismiss the screensaver on any activity.
 class ScreenSaver : public QWidget
 {
   Q_OBJECT
 
 public:
+  // 'fps' is kept for call-site compatibility but is unused: playback runs at
+  // the video's own frame rate.
   ScreenSaver(int width, int height, int fps = 60, QWidget *parent = nullptr);
   void start();
   void stop();
 
 protected:
-  void paintEvent(QPaintEvent *event) override;
-
-private slots:
-  void step();
+  void resizeEvent(QResizeEvent *event) override;
 
 private:
-  // Draws the full composition for the current time 't' onto 'p'. 'p' is
-  // expected to already map the 1920x1080 canvas onto the widget.
-  void paintComposition(QPainter &p) const;
-
-  QTimer animTimer;
-  // Accumulated animation time in seconds, wrapped to the loop length.
-  qreal t = 0.0;
-  // Seconds between frames (1 / fps), used to advance 't'.
-  qreal frameSeconds = 1.0 / 60.0;
+  QMediaPlayer *player = nullptr;
+  QAudioOutput *audio = nullptr;
+  QVideoWidget *video = nullptr;
 };
 #endif/*__OCCURITY_SCREENSAVER_H__*/

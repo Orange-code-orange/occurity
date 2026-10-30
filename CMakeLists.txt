@@ -18,7 +18,7 @@ endif()
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Xml SvgWidgets Network LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Xml SvgWidgets MultimediaWidgets Multimedia Network LinguistTools)
 
 qt_standard_project_setup()
 
@@ -75,7 +75,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 # target_compile_options(Occurity PRIVATE -g) <-- This is auto-added by cmake for a 'Debug' release
 endif()
 
-target_link_libraries(Occurity PRIVATE Qt6::Widgets Qt6::Xml Qt6::SvgWidgets Qt6::Network)
+target_link_libraries(Occurity PRIVATE Qt6::Widgets Qt6::Xml Qt6::SvgWidgets Qt6::MultimediaWidgets Qt6::Multimedia Qt6::Network)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -105,5 +105,6 @@ install(DIRECTORY
   ${CMAKE_SOURCE_DIR}/scripts
   ${CMAKE_SOURCE_DIR}/jobs
   ${CMAKE_SOURCE_DIR}/svg
+  ${CMAKE_SOURCE_DIR}/videos
   DESTINATION .
 )
